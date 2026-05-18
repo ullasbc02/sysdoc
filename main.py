@@ -2,6 +2,7 @@ from planner import plan_commands
 from safety import is_safe_command
 from executor import execute_command
 from analyzer import analyze_results
+from history import save_history
 
 
 def main():
@@ -45,6 +46,9 @@ def main():
             print()
 
         print(analyze_results(user_input, results))
+
+        save_history(user_input, results)
+
         print()
 
 

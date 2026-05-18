@@ -1,3 +1,38 @@
+from collections import Counter
+
+
+def analyze_log_errors(output: str) -> list[str]:
+    lines = output.splitlines()
+
+    if not lines:
+        return ["- No matching log errors found."]
+
+    messages = []
+
+    for line in lines:
+        if "ERROR" in line:
+            # Remove timestamp roughly: first two fields
+            parts = line.split(" ", 2)
+            if len(parts) == 3:
+                messages.append(parts[2])
+            else:
+                messages.append(line)
+
+    counter = Counter(messages)
+
+    result = []
+    result.append("- Found log errors.")
+
+    most_common = counter.most_common(3)
+
+    result.append("- Most frequent errors:")
+
+    for message, count in most_common:
+        result.append(f"  - {count}x {message}")
+
+    return result
+
+
 def analyze_results(user_input: str, results: list[dict]) -> str:
     lines = []
 
@@ -29,11 +64,7 @@ def analyze_results(user_input: str, results: list[dict]) -> str:
             lines.append("  Look for processes with high CPU or memory usage.")
 
         elif command.startswith("grep"):
-            if output:
-                lines.append("- Found matching log errors.")
-                lines.append("  Review repeated errors first because they may indicate root cause.")
-            else:
-                lines.append("- No matching log errors found.")
+            lines.extend(analyze_log_errors(output))
 
         elif command.startswith("find"):
             if output:
@@ -47,6 +78,6 @@ def analyze_results(user_input: str, results: list[dict]) -> str:
 
     lines.append("")
     lines.append("Recommended next step:")
-    lines.append("- Review the command output above and avoid destructive cleanup until confirmed.")
+    lines.append("- Investigate the most repeated error first, then check related service configuration.")
 
     return "\n".join(lines)
