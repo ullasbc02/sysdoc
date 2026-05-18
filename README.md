@@ -296,6 +296,14 @@ git clone <repo-url>
 cd opspilot-ai
 ```
 
+## Install Dependencies
+
+Use Python's module form so you do not depend on a separate `pip` executable:
+
+```bash
+python3 -m pip install -r requirements.txt
+```
+
 ---
 
 ## Run
