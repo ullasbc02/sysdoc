@@ -13,3 +13,5 @@ coverage.xml
 dist/
 build/
 *.egg-info/
+# Local environment files
+.env
