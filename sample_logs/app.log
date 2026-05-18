@@ -1,0 +1,9 @@
+2026-05-17 10:01:02 INFO server started on port 8080
+2026-05-17 10:01:10 INFO connected to database
+2026-05-17 10:02:14 ERROR payment-service database timeout after 3000ms
+2026-05-17 10:02:18 WARN retrying payment request
+2026-05-17 10:02:21 ERROR payment-service database timeout after 3000ms
+2026-05-17 10:03:01 INFO user login successful
+2026-05-17 10:03:44 ERROR auth-service invalid token signature
+2026-05-17 10:04:10 WARN memory usage above 80%
+2026-05-17 10:05:31 ERROR payment-service database timeout after 3000ms
