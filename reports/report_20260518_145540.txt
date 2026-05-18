@@ -1,0 +1,15 @@
+OpsPilot Summary Report
+--------------------------------------------------------------------------------
+User request: check log errors
+
+Commands executed:
+- [SUCCESS] [logs] grep -i ERROR sample_logs/app.log
+
+Diagnosis:
+- Found log errors.
+- Most frequent errors:
+  - 3x ERROR payment-service database timeout after 3000ms
+  - 1x ERROR auth-service invalid token signature
+
+Recommended next step:
+- Investigate the most repeated error first, then check related service configuration.

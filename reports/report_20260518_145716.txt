@@ -1,0 +1,13 @@
+OpsPilot Summary Report
+--------------------------------------------------------------------------------
+User request: check running processes
+
+Commands executed:
+- [SUCCESS] [process] ps aux
+
+Diagnosis:
+- Checked running processes.
+  Look for processes with high CPU or memory usage.
+
+Recommended next step:
+- Investigate the most repeated error first, then check related service configuration.

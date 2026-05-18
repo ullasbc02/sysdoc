@@ -1,87 +1,135 @@
 
 # OpsPilot AI
 
-OpsPilot AI is a safe Linux troubleshooting and automation assistant.
+AI-powered Linux troubleshooting and developer productivity agent.
 
-It converts natural language operations questions into safe Linux investigation commands, executes them, analyzes the output, and stores command history.
+OpsPilot converts natural language engineering troubleshooting requests into safe Linux investigation workflows, executes diagnostic commands, analyzes results, and generates operational reports.
 
-## Why this project?
+This project is being built incrementally from first principles to understand how production AI agents work before introducing frameworks like LangChain, LangGraph, and AutoGen.
 
-This project is designed for AI-first engineering workflows:
+---
 
-- Linux troubleshooting
-- Bash/Python automation
-- developer productivity
-- safe command execution
-- system reliability analysis
-- agent-style tool usage
+# Motivation
 
-## V1 Features
+Modern engineering teams spend significant time on repetitive troubleshooting tasks:
 
-- CLI interface
-- rule-based planner
-- safe command allowlist
-- dangerous command blocking
-- Linux command execution
-- log error analysis
-- command history
+- checking disk usage
+- analyzing logs
+- finding failing processes
+- locating large files
+- investigating infrastructure issues
+- writing diagnostic shell commands manually
 
-## Architecture
+OpsPilot explores how AI agents can improve engineering productivity by safely automating these workflows.
+
+---
+
+# Why this project?
+
+This project directly aligns with roles focused on:
+
+- Linux systems troubleshooting
+- Bash / Python automation
+- engineering productivity
+- AI-first developer workflows
+- operational reliability
+- safe automation
+- agentic tooling
+
+---
+
+# V1 Scope
+
+V1 is a safe Linux troubleshooting assistant.
+
+Core workflow:
 
 ```text
 User request
-   ↓
+   |
 Planner
-   ↓
+   |
 Safety Validator
-   ↓
+   |
 Command Executor
-   ↓
+   |
 Analyzer
-   ↓
+   |
 History Logger
-   ↓
-Final Diagnosis
-````
-
-## Supported intents
-
-```text
-disk usage
-process / CPU / memory
-log errors
-large files
+   |
+Report Generator
 ```
 
-## Example
+Example:
+
+```text
+User:
+"My disk is full"
+
+OpsPilot:
+- plans investigation steps
+- selects safe Linux commands
+- executes diagnostics
+- analyzes outputs
+- generates recommendations
+```
+
+---
+
+# Features (V1)
+
+## CLI Interface
+
+Interactive terminal agent:
 
 ```bash
 python3 main.py
 ```
 
-```text
-Ask OpsPilot > check log errors
+---
+
+## Demo Mode
+
+Quick demo for interviewers / reviewers:
+
+```bash
+python3 main.py --demo
 ```
 
-Output:
+---
+
+## Rule-Based Planner
+
+Maps user intent into investigation workflows.
+
+Supported categories:
+
+* disk usage
+* processes / CPU / memory
+* log errors
+* large files
+
+---
+
+## Safety Guardrails
+
+Allowed commands:
 
 ```text
-Plan + Execution:
-- [RUNNING] grep -i ERROR sample_logs/app.log
-
-Diagnosis:
-- Found log errors.
-- Most frequent errors:
-  - 3x ERROR payment-service database timeout after 3000ms
-  - 1x ERROR auth-service invalid token signature
-
-Recommended next step:
-- Investigate the most repeated error first, then check related service configuration.
+df
+du
+ps
+grep
+find
+ls
+cat
+head
+tail
+wc
+echo
 ```
 
-## Safety
-
-OpsPilot blocks dangerous commands such as:
+Blocked dangerous commands:
 
 ```text
 rm
@@ -89,51 +137,492 @@ sudo
 shutdown
 reboot
 kill
+pkill
 chmod
 chown
+mv
 dd
 mkfs
+mount
+umount
 ```
 
-Only read-only diagnostic commands are allowed in V1.
+Blocked shell operators:
 
-## Roadmap
+```text
+&&
+||
+;
+>
+>>
+<
+$()
+`
+```
 
-### V1
+## Linux Command Execution
 
-Rule-based safe Linux troubleshooting agent.
+Commands are executed using:
 
-### V2
+```python
+subprocess.run()
+```
 
-LLM-powered planner using OpenAI/Claude APIs.
+With:
 
-### V3
+* timeout protection
+* stdout capture
+* stderr capture
+* return code handling
 
-Memory with SQLite and vector search.
+---
 
-### V4
+## Log Analysis
 
-LangChain integration.
+OpsPilot analyzes repeated application errors.
 
-### V5
+Example:
 
-LangGraph production workflow with nodes, routing, retries, and approval.
+```text
+payment-service database timeout
+```
 
-### V6
+Frequency detection:
 
-Multi-agent AutoGen version with planner, Linux debugger, script writer, and safety reviewer.
+```text
+3x repeated timeout
+```
 
+Helps identify likely root causes.
 
-## Setup Docker Container
+---
 
-Create and run Ubuntu 22.04 container:
+## Command History
+
+Every session logs:
+
+* timestamp
+* user request
+* category
+* planner reason
+* commands executed
+* stdout
+* stderr
+
+Saved to:
+
+```text
+opspilot_history.log
+```
+
+---
+
+## Report Generation
+
+Each investigation generates a timestamped report:
+
+```text
+reports/report_YYYYMMDD_HHMMSS.txt
+```
+
+---
+
+# Architecture
+
+```text
++-------------------------+
+| User CLI Input          |
++-------------------------+
+                  |
+                  v
++-------------------------+
+| Planner                 |
+| Intent -> Commands      |
++-------------------------+
+                  |
+                  v
++-------------------------+
+| Safety Validator        |
+| Allowlist / Blocking    |
++-------------------------+
+                  |
+                  v
++-------------------------+
+| Command Executor        |
+| subprocess.run()        |
++-------------------------+
+                  |
+                  v
++-------------------------+
+| Analyzer                |
+| Result interpretation   |
++-------------------------+
+                  |
+                  v
++-------------------------+
+| History + Reports       |
++-------------------------+
+```
+
+---
+
+# Project Structure
+
+```text
+opspilot-ai/
+   main.py
+   planner.py
+   safety.py
+   executor.py
+   analyzer.py
+   history.py
+   reporter.py
+   sample_logs/
+      app.log
+   reports/
+   Dockerfile
+   Makefile
+   README.md
+```
+
+---
+
+# Local Setup
+
+## Clone
+
 ```bash
-docker run -it --name opspilot-lab ubuntu:22.04 bash
+git clone <repo-url>
+cd opspilot-ai
 ```
 
-## Access Existing Container
+---
 
-To open a shell in the running container:
+## Run
+
 ```bash
-docker exec -it opspilot-lab bash
+python3 main.py
 ```
+
+---
+
+## Demo
+
+```bash
+python3 main.py --demo
+```
+
+---
+
+# Makefile Commands
+
+Run:
+
+```bash
+make run
+```
+
+Demo:
+
+```bash
+make demo
+```
+
+Docker build:
+
+```bash
+make docker-build
+```
+
+Docker run:
+
+```bash
+make docker-run
+```
+
+Clean generated artifacts:
+
+```bash
+make clean
+```
+
+---
+
+# Docker Linux Lab (Mac Friendly)
+
+This project is developed on macOS but runs Linux diagnostics inside Docker.
+
+Build:
+
+```bash
+docker build -t opspilot-ai .
+```
+
+Run:
+
+```bash
+docker run -it --rm -v $(pwd):/app opspilot-ai
+```
+
+Inside container:
+
+```bash
+python3 main.py
+```
+
+This provides:
+
+* Ubuntu environment
+* Linux utilities
+* isolated troubleshooting lab
+
+---
+
+# Example Usage
+
+## Disk troubleshooting
+
+Input:
+
+```text
+check disk usage
+```
+
+Output:
+
+```text
+df -h
+du -sh *
+```
+
+Analysis:
+
+```text
+filesystem usage
+largest directories
+cleanup recommendations
+```
+
+---
+
+## Log analysis
+
+Input:
+
+```text
+check log errors
+```
+
+Output:
+
+```text
+grep -i ERROR sample_logs/app.log
+```
+
+Analysis:
+
+```text
+repeated database timeouts
+auth failures
+investigation recommendations
+```
+
+---
+
+## Process inspection
+
+Input:
+
+```text
+check running processes
+```
+
+Output:
+
+```text
+ps aux
+```
+
+---
+
+## Large file search
+
+Input:
+
+```text
+find large files
+```
+
+Output:
+
+```text
+find . -type f -size +100M
+```
+
+---
+
+# Current Limitations
+
+V1 intentionally uses rule-based planning.
+
+Not yet included:
+
+* LLM reasoning
+* dynamic tool selection
+* memory retrieval
+* multi-step planning
+* autonomous retries
+* human approval
+* multi-agent collaboration
+
+---
+
+# Roadmap
+
+## V2 - LLM Planner
+
+Replace static planner with OpenAI / Claude.
+
+Flow:
+
+```text
+User request
+-> LLM planner
+-> command plan
+```
+
+Learn:
+
+* prompt engineering
+* tool calling
+* structured outputs
+
+---
+
+## V3 - Agent Loop
+
+Introduce ReAct:
+
+```text
+Reason
+Act
+Observe
+Repeat
+```
+
+Dynamic troubleshooting.
+
+---
+
+## V4 - Memory
+
+Add:
+
+* SQLite session history
+* vector semantic memory
+
+Capabilities:
+
+```text
+similar incidents
+past fixes
+context recall
+```
+
+---
+
+## V5 - LangChain
+
+Introduce:
+
+* prompt templates
+* tools
+* retrievers
+* agent abstraction
+
+---
+
+## V6 - LangGraph
+
+Production orchestration:
+
+* planner node
+* tool executor node
+* validator node
+* retries
+* conditional routing
+* human approval
+
+---
+
+## V7 - AutoGen Multi-Agent
+
+Agents:
+
+* planner
+* Linux debugger
+* bash script generator
+* security reviewer
+* report summarizer
+
+---
+
+# Interview Talking Points
+
+This project demonstrates:
+
+✅ Linux troubleshooting
+✅ Bash automation
+✅ Python systems programming
+✅ safe command execution
+✅ operational diagnostics
+✅ AI agent architecture fundamentals
+✅ production architecture thinking
+✅ incremental framework adoption
+✅ developer productivity tooling
+
+---
+
+# Future Production Extensions
+
+Potential upgrades:
+
+* FastAPI API service
+* web dashboard
+* Kubernetes deployment
+* Slack bot integration
+* GitHub Actions integration
+* CI/CD failure investigation
+* Claude Code integration
+* shellcheck validation
+* policy engine
+* audit logging
+* RBAC
+* remote host diagnostics
+
+---
+
+# Long-Term Goal
+
+OpsPilot evolves from:
+
+```text
+safe Linux assistant
+```
+
+into:
+
+```text
+production AI engineering operations agent
+```
+
+for:
+
+* troubleshooting
+* incident analysis
+* deployment debugging
+* automation generation
+* developer workflow acceleration
+
+This now looks like a serious production-oriented project, not a toy script.
+

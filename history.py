@@ -11,7 +11,10 @@ def save_history(user_input: str, results: list[dict]) -> None:
         file.write(f"User input: {user_input}\n")
 
         for result in results:
-            file.write(f"\nCommand: {result['command']}\n")
+            file.write("\n")
+            file.write(f"Category: {result.get('category', 'unknown')}\n")
+            file.write(f"Planner reason: {result.get('reason', 'N/A')}\n")
+            file.write(f"Command: {result['command']}\n")
             file.write(f"Success: {result['success']}\n")
             file.write(f"Return code: {result['returncode']}\n")
             file.write("STDOUT:\n")

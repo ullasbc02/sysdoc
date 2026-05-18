@@ -1,0 +1,17 @@
+.PHONY: run demo docker-build docker-run clean
+
+run:
+	python3 main.py
+
+demo:
+	python3 main.py --demo
+
+docker-build:
+	docker build -t opspilot-ai .
+
+docker-run:
+	docker run -it --rm -v $(PWD):/app opspilot-ai
+
+clean:
+	rm -rf reports/*.txt
+	rm -f opspilot_history.log

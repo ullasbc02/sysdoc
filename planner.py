@@ -1,27 +1,51 @@
-def plan_commands(user_input: str) -> list[str]:
+def plan_commands(user_input: str) -> list[dict]:
     text = user_input.lower()
 
     if "disk" in text or "storage" in text or "space" in text:
         return [
-            "df -h",
-            "du -sh *"
+            {
+                "category": "disk",
+                "command": "df -h",
+                "reason": "Check overall filesystem disk usage."
+            },
+            {
+                "category": "disk",
+                "command": "du -sh *",
+                "reason": "Find large directories in the current path."
+            }
         ]
 
     if "process" in text or "cpu" in text or "memory" in text:
         return [
-            "ps aux"
+            {
+                "category": "process",
+                "command": "ps aux",
+                "reason": "Inspect running processes and resource usage."
+            }
         ]
 
     if "log" in text or "error" in text or "failure" in text:
         return [
-            "grep -i ERROR sample_logs/app.log"
+            {
+                "category": "logs",
+                "command": "grep -i ERROR sample_logs/app.log",
+                "reason": "Search application logs for error entries."
+            }
         ]
 
     if "large file" in text or "big file" in text:
         return [
-            "find . -type f -size +100M"
+            {
+                "category": "files",
+                "command": "find . -type f -size +100M",
+                "reason": "Find files larger than 100 MB."
+            }
         ]
 
     return [
-        "echo 'No matching troubleshooting plan found yet.'"
+        {
+            "category": "general",
+            "command": "echo 'No matching troubleshooting plan found yet.'",
+            "reason": "Fallback response for unsupported requests."
+        }
     ]
