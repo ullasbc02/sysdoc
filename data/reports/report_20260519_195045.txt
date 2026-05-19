@@ -1,0 +1,29 @@
+OpsPilot Summary Report
+--------------------------------------------------------------------------------
+User request: check running processes
+
+Commands executed:
+- [SUCCESS] [process] ps aux
+
+**1. Diagnosis**  
+The `ps aux` output shows four processes owned by `root` that are currently running on the system.
+
+**2. Important findings**  
+- **PID 1** – `bash` (idle, started at 19:32).  
+- **PID 53** – `python3 main.py --demo --llm` (using ~1.5 % CPU and ~0.7 % memory).  
+- **PID 57** – `/bin/sh -c ps aux` (a shell executing the `ps` command; essentially a short‑lived helper process).  
+- **PID 58** – `ps aux` (the current command itself; also short‑lived).  
+
+The only long‑running, resource‑using process is the Python script (`main.py`). All other processes are either the shell that launched it or the `ps` command you just executed.
+
+**3. Recommended next steps**  
+- **Monitor the Python script**:  
+  - Check its resource consumption over time (`top`, `htop`, or `pidstat`).  
+  - Verify that it is behaving as expected (e.g., not hanging or leaking memory).  
+- **If the script is no longer needed**:  
+  - Gracefully stop it with `kill <PID>` or `pkill -f main.py` rather than sending SIGKILL.  - **Log inspection** (if the script writes logs):  
+  - Look at the script’s output or log files for errors or unexpected behavior.  
+- **Consider system load**:  
+  - If you notice high CPU or memory usage, evaluate whether the script should be throttled, restarted, or configured differently.  
+
+No destructive actions are required at this moment; just observe the script’s behavior and intervene only if it exceeds acceptable limits.

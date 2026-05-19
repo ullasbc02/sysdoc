@@ -1,5 +1,27 @@
 from collections import Counter
 
+def analyze_process_output(output: str) -> list[str]:
+    lines = output.splitlines()
+
+    if not lines:
+        return ["- No process output found."]
+
+    result = []
+    result.append("- Checked running processes.")
+
+    # ps aux output usually has header:
+    # USER PID %CPU %MEM VSZ RSS TTY STAT START TIME COMMAND
+    if len(lines) > 1:
+        top_processes = lines[1:6]
+
+        result.append("- Top visible processes:")
+
+        for process in top_processes:
+            result.append(f"  - {process}")
+
+    result.append("- Review high %CPU or %MEM values first.")
+
+    return result
 
 def analyze_log_errors(output: str) -> list[str]:
     lines = output.splitlines()
@@ -60,8 +82,7 @@ def analyze_results(user_input: str, results: list[dict]) -> str:
             lines.append("  Larger directories may be good candidates for cleanup or archiving.")
 
         elif command.startswith("ps"):
-            lines.append("- Checked running processes.")
-            lines.append("  Look for processes with high CPU or memory usage.")
+            lines.extend(analyze_process_output(output))
 
         elif command.startswith("grep"):
             lines.extend(analyze_log_errors(output))

@@ -1,7 +1,8 @@
 from datetime import datetime
+from pathlib import Path
 
 
-HISTORY_FILE = "opspilot_history.log"
+HISTORY_FILE = Path(__file__).parent.parent / "data" / "opspilot_history.log"
 
 
 def save_history(user_input: str, results: list[dict]) -> None:

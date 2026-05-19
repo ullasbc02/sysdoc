@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 
 
-REPORTS_DIR = Path("reports")
+REPORTS_DIR = Path(__file__).parent.parent / "data" / "reports"
 
 
 def build_report(user_input: str, results: list[dict], analysis: str) -> str:
