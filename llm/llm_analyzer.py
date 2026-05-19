@@ -23,15 +23,15 @@ def analyze_results_with_llm(user_input: str, results: list[dict]) -> str:
     for result in results:
         formatted_results.append(
             f"""
-Command: {result["command"]}
-Category: {result.get("category", "unknown")}
-Success: {result["success"]}
-STDOUT:
-{result["stdout"]}
+                Command: {result["command"]}
+                Category: {result.get("category", "unknown")}
+                Success: {result["success"]}
+                STDOUT:
+                {result["stdout"]}
 
-STDERR:
-{result["stderr"]}
-"""
+                STDERR:
+                {result["stderr"]}
+            """
         )
 
     joined_results = "\n".join(formatted_results)

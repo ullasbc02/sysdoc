@@ -1,7 +1,8 @@
 import sys
 from pathlib import Path
 
-# Add parent directory to path for imports
+# Ensure project root is on sys.path so `src` package imports work
+# when running `python3 src/main.py` directly.
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from src.planner import plan_commands as rule_based_plan_commands
@@ -13,7 +14,8 @@ from llm.llm_analyzer import analyze_results_with_llm
 from src.history import save_history
 from src.reporter import build_report, save_report
 from utils.plan_validator import validate_plan_schema
-
+from src.react_agent import run_react_agent
+from src.react_reporter import build_react_report, save_react_report
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -39,6 +41,35 @@ def use_llm_mode() -> bool:
 
     return True
 
+
+def handle_react_request(user_input: str) -> None:
+    print_header("REACT AGENT MODE")
+
+    state = run_react_agent(user_input)
+
+    print_header("AGENT TRACE")
+
+    for step in state.steps:
+        print()
+        print(f"Iteration {step.iteration}")
+        print("-" * 80)
+        print(f"Thought: {step.thought}")
+        print(f"Action: {step.action}")
+
+        if step.command:
+            print(f"Command: {step.command}")
+
+        if step.observation:
+            print("Observation:")
+            print(step.observation)
+
+    print_header("FINAL ANSWER")
+    print(state.final_answer)
+
+    report = build_react_report(state)
+    report_path = save_react_report(report)
+    print()
+    print(f"ReAct report saved to: {report_path}")
 
 def get_plans(user_input: str, llm_enabled: bool) -> tuple[list[dict], str, list[str]]:
     if llm_enabled:
@@ -162,7 +193,10 @@ def main():
         if not user_input:
             continue
 
-        handle_request(user_input, llm_enabled)
+        if "--react" in sys.argv:
+            handle_react_request(user_input)
+        else:
+            handle_request(user_input, llm_enabled)
 
 
 if __name__ == "__main__":

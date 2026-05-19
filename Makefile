@@ -1,10 +1,25 @@
-.PHONY: run demo docker-build docker-run clean
+.PHONY: run run-rule run-llm run-react demo demo-rule demo-llm docker-build docker-run clean
 
 run:
-	python3 src/main.py
+	python3 main.py
+
+run-rule:
+	python3 main.py --rule
+
+run-llm:
+	python3 main.py --llm
+
+run-react:
+	python3 main.py --react
 
 demo:
-	python3 src/main.py --demo
+	python3 main.py --demo
+
+demo-rule:
+	python3 main.py --demo --rule
+
+demo-llm:
+	python3 main.py --demo --llm
 
 docker-build:
 	docker build -t opspilot-ai .
@@ -13,5 +28,5 @@ docker-run:
 	docker run -it --rm -v $(PWD):/app opspilot-ai
 
 clean:
-	rm -rf data/reports/*.txt
-	rm -f data/opspilot_history.log
+	rm -rf reports/*.txt
+	rm -f opspilot_history.log

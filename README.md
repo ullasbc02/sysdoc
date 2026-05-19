@@ -3,400 +3,100 @@
 
 AI-powered Linux troubleshooting and developer productivity agent.
 
-OpsPilot converts natural language engineering troubleshooting requests into safe Linux investigation workflows, executes diagnostic commands, analyzes results, and generates operational reports.
+This repository has been reorganized into a small Python package layout. The main entrypoint is `src/main.py` and supporting code lives in `src/`, `llm/`, `utils/`, and `data/`.
 
-This project is being built incrementally from first principles to understand how production AI agents work before introducing frameworks like LangChain, LangGraph, and AutoGen.
+Quick reference — recommended run commands:
 
----
-
-# Motivation
-
-Modern engineering teams spend significant time on repetitive troubleshooting tasks:
-
-- checking disk usage
-- analyzing logs
-- finding failing processes
-- locating large files
-- investigating infrastructure issues
-- writing diagnostic shell commands manually
-
-OpsPilot explores how AI agents can improve engineering productivity by safely automating these workflows.
-
----
-
-# Why this project?
-
-This project directly aligns with roles focused on:
-
-- Linux systems troubleshooting
-- Bash / Python automation
-- engineering productivity
-- AI-first developer workflows
-- operational reliability
-- safe automation
-- agentic tooling
-
----
-
-# V1 Scope
-
-V1 is a safe Linux troubleshooting assistant.
-
-Core workflow:
-
-```text
-User request
-   |
-Planner
-   |
-Safety Validator
-   |
-Command Executor
-   |
-Analyzer
-   |
-History Logger
-   |
-Report Generator
-```
-
-Example:
-
-```text
-User:
-"My disk is full"
-
-OpsPilot:
-- plans investigation steps
-- selects safe Linux commands
-- executes diagnostics
-- analyzes outputs
-- generates recommendations
-```
-
----
-
-# Features (V1)
-
-## CLI Interface
-
-Interactive terminal agent:
+Run the interactive CLI (preferred):
 
 ```bash
-python3 main.py
+python3 -m src.main
 ```
 
----
-
-## Demo Mode
-
-Quick demo for interviewers / reviewers:
+Run the interactive CLI (alternative):
 
 ```bash
-python3 main.py --demo
+python3 src/main.py
 ```
 
----
-
-## Rule-Based Planner
-
-Maps user intent into investigation workflows.
-
-Supported categories:
-
-* disk usage
-* processes / CPU / memory
-* log errors
-* large files
-
----
-
-## Safety Guardrails
-
-Allowed commands:
-
-```text
-df
-du
-ps
-grep
-find
-ls
-cat
-head
-tail
-wc
-echo
-```
-
-Blocked dangerous commands:
-
-```text
-rm
-sudo
-shutdown
-reboot
-kill
-pkill
-chmod
-chown
-mv
-dd
-mkfs
-mount
-umount
-```
-
-Blocked shell operators:
-
-```text
-&&
-||
-;
->
->>
-<
-$()
-`
-```
-
-## Linux Command Execution
-
-Commands are executed using:
-
-```python
-subprocess.run()
-```
-
-With:
-
-* timeout protection
-* stdout capture
-* stderr capture
-* return code handling
-
----
-
-## Log Analysis
-
-OpsPilot analyzes repeated application errors.
-
-Example:
-
-```text
-payment-service database timeout
-```
-
-Frequency detection:
-
-```text
-3x repeated timeout
-```
-
-Helps identify likely root causes.
-
----
-
-## Command History
-
-Every session logs:
-
-* timestamp
-* user request
-* category
-* planner reason
-* commands executed
-* stdout
-* stderr
-
-Saved to:
-
-```text
-opspilot_history.log
-```
-
----
-
-## Report Generation
-
-Each investigation generates a timestamped report:
-
-```text
-reports/report_YYYYMMDD_HHMMSS.txt
-```
-
----
-
-# Architecture
-
-```text
-+-------------------------+
-| User CLI Input          |
-+-------------------------+
-                  |
-                  v
-+-------------------------+
-| Planner                 |
-| Intent -> Commands      |
-+-------------------------+
-                  |
-                  v
-+-------------------------+
-| Safety Validator        |
-| Allowlist / Blocking    |
-+-------------------------+
-                  |
-                  v
-+-------------------------+
-| Command Executor        |
-| subprocess.run()        |
-+-------------------------+
-                  |
-                  v
-+-------------------------+
-| Analyzer                |
-| Result interpretation   |
-+-------------------------+
-                  |
-                  v
-+-------------------------+
-| History + Reports       |
-+-------------------------+
-```
-
----
-
-# Project Structure
-
-```text
-opspilot-ai/
-   main.py
-   planner.py
-   safety.py
-   executor.py
-   analyzer.py
-   history.py
-   reporter.py
-   sample_logs/
-      app.log
-   reports/
-   Dockerfile
-   Makefile
-   README.md
-```
-
----
-
-# Local Setup
-
-## Clone
+Run in ReAct agent mode (step-by-step agent):
 
 ```bash
-git clone <repo-url>
-cd opspilot-ai
+python3 -m src.main --react
 ```
 
-## Install Dependencies
-
-Use Python's module form so you do not depend on a separate `pip` executable:
+Run demo mode:
 
 ```bash
-python3 -m pip install -r requirements.txt
+python3 -m src.main --demo
 ```
 
----
-
-## Run
+Run via Makefile:
 
 ```bash
-python3 main.py
+make run        # runs python3 -m src.main
+make demo       # runs demo mode
 ```
 
----
-
-## Demo
-
-```bash
-python3 main.py --demo
-```
-
----
-
-# Makefile Commands
-
-Run:
-
-```bash
-make run
-```
-
-Demo:
-
-```bash
-make demo
-```
-
-Docker build:
+Docker:
 
 ```bash
 make docker-build
-```
-
-Docker run:
-
-```bash
 make docker-run
+# inside container: python3 -m src.main
 ```
 
-Clean generated artifacts:
+Project layout (important files only):
+
+```
+sysdoc/
+  src/                 # main application code (entrypoint: src/main.py)
+    agent_state.py
+    analyzer.py
+    executor.py
+    history.py
+    main.py
+    planner.py
+    reporter.py
+    react_agent.py
+  llm/                 # LLM integration helpers
+  utils/               # helpers: safety, plan validation
+  data/                # runtime data: reports/, sample_logs/, opspilot_history.log
+  tests/               # example runners and tests
+  tools.py             # thin tool adapter used by react agent
+  Makefile
+  Dockerfile
+  README.md
+```
+
+Data and outputs:
+
+- `data/reports/` — generated investigation reports
+- `data/opspilot_history.log` — execution history log
+- `data/sample_logs/` — sample application logs used by the `search_logs` tool
+
+Local setup
 
 ```bash
-make clean
+git clone <repo-url>
+cd sysdoc
+python3 -m pip install -r requirements.txt
 ```
 
----
-
-# Docker Linux Lab (Mac Friendly)
-
-This project is developed on macOS but runs Linux diagnostics inside Docker.
-
-Build:
+Running tests (basic script runners are in `tests/`):
 
 ```bash
-docker build -t opspilot-ai .
+python3 tests/test_react_agent.py
+python3 -m tests.test_llm
 ```
 
-Run:
+Notes and recommendations
 
-```bash
-docker run -it --rm -v $(pwd):/app opspilot-ai
-```
+- Prefer `python3 -m src.main` so module imports resolve reliably.
+- The Makefile targets call `python3 -m src.main` and `docker` for convenience.
+- Reports and history now live under the `data/` directory.
 
-Inside container:
-
-```bash
-python3 main.py
-```
-
-This provides:
-
-* Ubuntu environment
-* Linux utilities
-* isolated troubleshooting lab
-
----
-
-# Example Usage
-
-## Disk troubleshooting
-
-Input:
-
-```text
-check disk usage
-```
-
-Output:
+If you'd like, I can also add a short `CONTRIBUTING.md` with development tips.
 
 ```text
 df -h
