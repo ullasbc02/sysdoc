@@ -105,7 +105,10 @@ def build_max_iteration_summary(state: AgentState) -> str:
     return "\n".join(lines)
 
 
-def extract_json(text: str) -> dict:
+def extract_json(text: str | None) -> dict:
+    if text is None or not text.strip():
+        raise ValueError("LLM returned empty response.")
+
     text = text.strip()
 
     text = re.sub(r"^```json\s*", "", text)

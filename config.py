@@ -10,6 +10,12 @@ DEFAULT_CONFIG = {
         "max_iterations": 5,
         "approval_required": False,
     },
+    "llm": {
+        "provider": "openrouter",
+        "openrouter_model": "openrouter/free",
+        "ollama_model": "llama3.1",
+        "ollama_base_url": "http://host.docker.internal:11434/v1",
+    },
     "paths": {
         "default_log_file": "data/sample_logs/app.log",
         "reports_dir": "data/reports",
@@ -30,7 +36,10 @@ def load_config() -> dict:
     with CONFIG_PATH.open("r", encoding="utf-8") as file:
         user_config = json.load(file)
 
-    config = DEFAULT_CONFIG.copy()
+    config = {
+        section: values.copy() if isinstance(values, dict) else values
+        for section, values in DEFAULT_CONFIG.items()
+    }
 
     for section, values in user_config.items():
         if section in config and isinstance(values, dict):

@@ -17,6 +17,7 @@ from utils.plan_validator import validate_plan_schema
 from src.react_agent import run_react_agent
 from src.react_reporter import build_react_report, save_react_report
 from src.audit import save_agent_audit
+from memory import save_investigation, list_recent_investigations
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -71,9 +72,11 @@ def handle_react_request(user_input: str) -> None:
     report = build_react_report(state)
     report_path = save_react_report(report)
     audit_path = save_agent_audit(state)
+    memory_id = save_investigation(state)
     print()
     print(f"ReAct report saved to: {report_path}")
     print(f"Audit log saved to: {audit_path}")
+    print(f"Investigation saved to memory with id: {memory_id}")
 
 def get_plans(user_input: str, llm_enabled: bool) -> tuple[list[dict], str, list[str]]:
     if llm_enabled:
@@ -195,6 +198,24 @@ def main():
             break
 
         if not user_input:
+            continue
+
+        if user_input.lower() in ["history", "recent"]:
+            recent = list_recent_investigations()
+
+            print_header("RECENT INVESTIGATIONS")
+
+            if not recent:
+                print("No previous investigations found.")
+            else:
+                for item in recent:
+                    print(f"ID: {item['id']}")
+                    print(f"Time: {item['timestamp']}")
+                    print(f"Query: {item['user_query']}")
+                    print(f"Steps: {item['steps_count']}")
+                    print(f"Final: {item['final_answer']}")
+                    print("-" * 80)
+
             continue
 
         if "--react" in sys.argv:

@@ -96,6 +96,29 @@ Notes and recommendations
 - The Makefile targets call `python3 -m src.main` and `docker` for convenience.
 - Reports and history now live under the `data/` directory.
 
+LLM provider switching
+
+- Use `.env` to control LLM provider and model selection.
+- Use `openrouter` or `ollama` as the provider value in `LLM_PROVIDER`.
+- Set `OPENROUTER_MODEL` to choose the OpenRouter model.
+- Set `OLLAMA_MODEL` to choose the Ollama model.
+- Set `OLLAMA_BASE_URL` to point at your Ollama server.
+- The Docker default for Ollama is `http://host.docker.internal:11434/v1`.
+- Keep one provider block active in `.env` and comment out the other.
+
+Example `.env` values:
+
+```bash
+# OpenRouter
+LLM_PROVIDER=openrouter
+OPENROUTER_MODEL=openrouter/free
+
+# Ollama
+#LLM_PROVIDER=ollama
+#OLLAMA_MODEL=llama3.1
+#OLLAMA_BASE_URL=http://host.docker.internal:11434/v1
+```
+
 If you'd like, I can also add a short `CONTRIBUTING.md` with development tips.
 
 ```text
