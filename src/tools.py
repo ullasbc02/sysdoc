@@ -4,7 +4,7 @@ from pathlib import Path
 
 from src.executor import execute_command
 from utils.safety import is_safe_command
-from config import load_config
+from src.config import load_config
 
 def get_default_log_file() -> str:
     config = load_config()

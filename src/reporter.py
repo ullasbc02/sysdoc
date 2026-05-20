@@ -1,7 +1,7 @@
 from datetime import datetime
 from pathlib import Path
 
-from config import load_config
+from src.config import load_config
 
 
 def get_reports_dir() -> Path:

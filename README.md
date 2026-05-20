@@ -3,7 +3,7 @@
 
 AI-powered Linux troubleshooting and developer productivity agent.
 
-This repository has been reorganized into a small Python package layout. The main entrypoint is `src/main.py` and supporting code lives in `src/`, `llm/`, `utils/`, and `data/`.
+This repository is organized around a Python package layout. The main entrypoint is `src/main.py`, and application code lives under `src/`, `llm/`, and `utils/`.
 
 Quick reference — recommended run commands:
 
@@ -60,17 +60,27 @@ sysdoc/
   src/                 # main application code (entrypoint: src/main.py)
     agent_state.py
     analyzer.py
+    approval.py
+    audit.py
+    config.py
     executor.py
     history.py
     main.py
+    memory.py
     planner.py
     reporter.py
     react_agent.py
+    react_reporter.py
+    script_audit.py
+    script_executor.py
+    script_generator.py
+    script_safety.py
+    tools.py
+    vector_memory.py
   llm/                 # LLM integration helpers
   utils/               # helpers: safety, plan validation
   data/                # runtime data: reports/, sample_logs/, opspilot_history.log
   tests/               # example runners and tests
-  tools.py             # thin tool adapter used by react agent
   Makefile
   Dockerfile
   README.md

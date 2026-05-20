@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from config import load_config
+from src.config import load_config
 
 import faiss
 import numpy as np

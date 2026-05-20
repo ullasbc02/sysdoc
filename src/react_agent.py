@@ -8,7 +8,7 @@ from src.tools import execute_tool
 from llm.openrouter_client import call_llm
 from src.approval import request_approval
 from src.tools import get_tool_risk_level
-from config import load_config
+from src.config import load_config
 
 SYSTEM_PROMPT = """
 You are OpsPilot AI, a Linux troubleshooting agent.

@@ -17,13 +17,13 @@ from utils.plan_validator import validate_plan_schema
 from src.react_agent import run_react_agent
 from src.react_reporter import build_react_report, save_react_report
 from src.audit import save_agent_audit
-from memory import save_investigation, list_recent_investigations, search_similar_investigations
-from config import load_config
-from script_generator import explain_bash_script, generate_bash_script, save_script
-from script_safety import validate_script
-from script_audit import save_script_audit
-from approval import request_approval
-from script_executor import execute_script
+from src.memory import save_investigation, list_recent_investigations, search_similar_investigations
+from src.config import load_config
+from src.script_generator import explain_bash_script, generate_bash_script, save_script
+from src.script_safety import validate_script
+from src.script_audit import save_script_audit
+from src.approval import request_approval
+from src.script_executor import execute_script
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -54,7 +54,7 @@ def handle_react_request(user_input: str) -> None:
     print_header("REACT AGENT MODE")
     approval_required = "--approval" in sys.argv
 
-    from vector_memory import save_investigation_vector, search_similar_vectors
+    from src.vector_memory import save_investigation_vector, search_similar_vectors
 
     similar = search_similar_investigations(user_input)
 
