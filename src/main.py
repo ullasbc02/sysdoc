@@ -16,6 +16,7 @@ from src.reporter import build_report, save_report
 from utils.plan_validator import validate_plan_schema
 from src.react_agent import run_react_agent
 from src.react_reporter import build_react_report, save_react_report
+from src.audit import save_agent_audit
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -44,8 +45,9 @@ def use_llm_mode() -> bool:
 
 def handle_react_request(user_input: str) -> None:
     print_header("REACT AGENT MODE")
+    approval_required = "--approval" in sys.argv
 
-    state = run_react_agent(user_input)
+    state = run_react_agent(user_input, approval_required=approval_required)
 
     print_header("AGENT TRACE")
 
@@ -68,8 +70,10 @@ def handle_react_request(user_input: str) -> None:
 
     report = build_react_report(state)
     report_path = save_react_report(report)
+    audit_path = save_agent_audit(state)
     print()
     print(f"ReAct report saved to: {report_path}")
+    print(f"Audit log saved to: {audit_path}")
 
 def get_plans(user_input: str, llm_enabled: bool) -> tuple[list[dict], str, list[str]]:
     if llm_enabled:

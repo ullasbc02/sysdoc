@@ -1,9 +1,13 @@
 from datetime import datetime
 from pathlib import Path
+
+from config import load_config
 from src.agent_state import AgentState
 
 
-REPORTS_DIR = Path(__file__).parent / "data" / "reports"
+def get_reports_dir() -> Path:
+    config = load_config()
+    return Path(config["paths"]["reports_dir"])
 
 
 def build_react_report(state: AgentState) -> str:
@@ -38,10 +42,11 @@ def build_react_report(state: AgentState) -> str:
 
 
 def save_react_report(report: str) -> str:
-    REPORTS_DIR.mkdir(exist_ok=True)
+    reports_dir = get_reports_dir()
+    reports_dir.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    report_path = REPORTS_DIR / f"react_report_{timestamp}.txt"
+    report_path = reports_dir / f"react_report_{timestamp}.txt"
 
     report_path.write_text(report, encoding="utf-8")
 

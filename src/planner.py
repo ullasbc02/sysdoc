@@ -28,7 +28,7 @@ def plan_commands(user_input: str) -> list[dict]:
         return [
             {
                 "category": "logs",
-                "command": "grep -i ERROR sample_logs/app.log",
+                "command": "grep -i ERROR data/sample_logs/app.log",
                 "reason": "Search application logs for error entries."
             }
         ]

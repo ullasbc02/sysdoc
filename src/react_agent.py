@@ -4,7 +4,9 @@ import re
 from src.agent_state import AgentState
 from src.tools import execute_tool
 from llm.openrouter_client import call_llm
-
+from src.approval import request_approval
+from src.tools import get_tool_risk_level
+from config import load_config
 
 SYSTEM_PROMPT = """
 You are OpsPilot AI, a Linux troubleshooting agent.
@@ -20,7 +22,9 @@ You can use only one action per iteration.
 Allowed actions:
 1. run_command
 2. search_logs
-3. final_answer
+3. inspect_processes
+4. inspect_disk
+5. final_answer
 
 Rules:
 - Return ONLY valid JSON.
@@ -55,7 +59,20 @@ JSON format for log search:
   "thought": "reasoning for the next step",
   "action": "search_logs",
   "pattern": "ERROR",
-  "path": "sample_logs/app.log"
+    "path": "data/sample_logs/app.log"
+}
+JSON format for process inspection:
+{
+  "thought": "reasoning for the next step",
+  "action": "inspect_processes",
+  "sort_by": "cpu | memory",
+  "limit": 5
+}
+JSON format for disk inspection:
+{
+  "thought": "reasoning for the next step",
+  "action": "inspect_disk",
+  "path": "."
 }
 """
 
@@ -95,17 +112,16 @@ def extract_json(text: str) -> dict:
     text = re.sub(r"^```\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
 
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    decoder = json.JSONDecoder()
 
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    for match in re.finditer(r"\{", text):
+        try:
+            parsed, _ = decoder.raw_decode(text[match.start():])
+            return parsed
+        except json.JSONDecodeError:
+            continue
 
-    if not match:
-        raise ValueError("No JSON object found in LLM response.")
-
-    return json.loads(match.group(0))
+    raise ValueError("No JSON object found in LLM response.")
 
 
 def decide_next_step(state: AgentState) -> dict:
@@ -132,8 +148,11 @@ def decide_next_step(state: AgentState) -> dict:
     return extract_json(response)
 
 
-def run_react_agent(user_query: str) -> AgentState:
+def run_react_agent(user_query: str, approval_required: bool = False) -> AgentState:
     state = AgentState(user_query=user_query)
+
+    config = load_config()
+    state.max_iterations = config["agent"]["max_iterations"]
 
     while not state.done and len(state.steps) < state.max_iterations:
         try:
@@ -157,7 +176,7 @@ def run_react_agent(user_query: str) -> AgentState:
             )
             break
 
-        if action not in {"run_command", "search_logs"}:
+        if action not in {"run_command", "search_logs", "inspect_processes", "inspect_disk"}:
             state.add_step(
                 thought=thought,
                 action=action,
@@ -170,12 +189,22 @@ def run_react_agent(user_query: str) -> AgentState:
         pattern = decision.get("pattern")
         path = decision.get("path")
 
+        sort_by = decision.get("sort_by", "cpu")
+        limit = decision.get("limit", 5)
+
         # Create a stable signature for the requested tool call so we can
         # detect repeated actions across iterations (including different
         # tool types like `search_logs`).
-        tool_signature = (
-            command if action == "run_command" else f"search_logs:{pattern}:{path}"
-        )
+        if action == "run_command":
+            tool_signature = command
+        elif action == "search_logs":
+            tool_signature = f"search_logs:{pattern}:{path}"
+        elif action == "inspect_processes":
+            tool_signature = f"inspect_processes:{sort_by}:{limit}"
+        elif action == "inspect_disk":
+            tool_signature = f"inspect_disk:{path or '.'}"
+        else:
+            tool_signature = action
 
         previous_actions = {
             step.command
@@ -198,12 +227,46 @@ def run_react_agent(user_query: str) -> AgentState:
 
             continue
 
+        # Request human approval if required.
+        risk_level = get_tool_risk_level(action)
+
+        if risk_level == "blocked":
+            observation = f"Tool action is blocked by policy: {action}"
+
+            state.add_step(
+                thought=thought,
+                action=action,
+                command=tool_signature,
+                observation=observation,
+            )
+
+            continue
+
+        if approval_required and risk_level != "safe":
+            approved = request_approval(action, tool_signature)
+
+            if not approved:
+                observation = f"Human rejected action: {tool_signature}"
+
+                state.add_step(
+                    thought=thought,
+                    action=action,
+                    command=tool_signature,
+                    observation=observation,
+                )
+
+                state.final_answer = "Investigation stopped because human approval was denied."
+                state.done = True
+                break
+
         # Execute the requested tool with explicit keyword arguments.
         tool_result = execute_tool(
             action=action,
             command=command,
             pattern=pattern,
             path=path,
+            sort_by=sort_by,
+            limit=limit,
         )
 
         observation = tool_result.get("observation")

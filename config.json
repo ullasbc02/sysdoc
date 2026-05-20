@@ -1,0 +1,16 @@
+{
+  "agent": {
+    "max_iterations": 5,
+    "approval_required": false
+  },
+  "paths": {
+    "default_log_file": "data/sample_logs/app.log",
+    "reports_dir": "ops_reports",
+    "audit_dir": "ops_audit_logs"
+  },
+  "tools": {
+    "default_process_limit": 5,
+    "default_process_sort": "cpu",
+    "default_disk_path": "."
+  }
+}

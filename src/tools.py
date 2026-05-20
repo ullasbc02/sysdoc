@@ -2,10 +2,20 @@ from pathlib import Path
 
 from src.executor import execute_command
 from utils.safety import is_safe_command
+from config import load_config
 
+def get_default_log_file() -> str:
+    config = load_config()
+    return config["paths"]["default_log_file"]
 
-DEFAULT_LOG_FILE = "sample_logs/app.log"
-
+TOOL_RISK_LEVELS = {
+    "search_logs": "safe",
+    "inspect_processes": "safe",
+    "inspect_disk": "safe",
+    "run_command": "review",
+}
+def get_tool_risk_level(action: str) -> str:
+    return TOOL_RISK_LEVELS.get(action, "review")
 
 def run_command_tool(command: str) -> dict:
     safe, reason = is_safe_command(command)
@@ -32,7 +42,10 @@ def run_command_tool(command: str) -> dict:
     }
 
 
-def search_logs_tool(pattern: str, path: str = DEFAULT_LOG_FILE) -> dict:
+def search_logs_tool(pattern: str, path: str | None = None) -> dict:
+    if path is None:
+        path = get_default_log_file()
+
     log_path = Path(path)
 
     if not log_path.exists():
@@ -60,10 +73,75 @@ def search_logs_tool(pattern: str, path: str = DEFAULT_LOG_FILE) -> dict:
         "command": f"search_logs(pattern={pattern}, path={path})",
     }
 
+def inspect_processes_tool(sort_by: str | None = None, limit: int | None = None) -> dict:
+    config = load_config()
+
+    sort_by = sort_by or config["tools"]["default_process_sort"]
+    limit = limit or config["tools"]["default_process_limit"]
+
+    if sort_by == "memory":
+        command = "ps aux --sort=-%mem"
+    else:
+        command = "ps aux --sort=-%cpu"
+
+    result = execute_command(command)
+
+    if not result["success"]:
+        return {
+            "success": False,
+            "observation": f"Command failed: {result['stderr']}",
+            "command": command,
+        }
+
+    lines = result["stdout"].splitlines()
+
+    if not lines:
+        observation = "No process information found."
+    else:
+        header = lines[0]
+        processes = lines[1 : limit + 1]
+        observation = "\n".join([header] + processes)
+
+    return {
+        "success": True,
+        "observation": observation,
+        "command": f"inspect_processes(sort_by={sort_by}, limit={limit})",
+    }
+
+def inspect_disk_tool(path: str | None = None) -> dict:
+    config = load_config()
+    path = path or config["tools"]["default_disk_path"]
+    commands = [
+        "df -h",
+        f"du -sh {path}",
+        f"du -sh {path}/*",
+    ]
+
+    observations = []
+
+    for command in commands:
+        result = execute_command(command)
+
+        observations.append(f"$ {command}")
+
+        if result["success"]:
+            observations.append(result["stdout"] or "(no output)")
+        else:
+            observations.append(f"ERROR: {result['stderr']}")
+
+        observations.append("")
+
+    return {
+        "success": True,
+        "observation": "\n".join(observations),
+        "command": f"inspect_disk(path={path})",
+    }
 
 TOOLS = {
     "run_command": run_command_tool,
     "search_logs": search_logs_tool,
+    "inspect_processes": inspect_processes_tool,
+    "inspect_disk": inspect_disk_tool,
 }
 
 
@@ -72,6 +150,8 @@ def execute_tool(
     command: str | None = None,
     pattern: str | None = None,
     path: str | None = None,
+    sort_by: str | None = None,
+    limit: int | None = None,
 ) -> dict:
     tool = TOOLS.get(action)
 
@@ -100,7 +180,16 @@ def execute_tool(
                 "command": None,
             }
 
-        return tool(pattern, path or DEFAULT_LOG_FILE)
+        return tool(pattern, path)
+    
+    if action == "inspect_processes":
+        return tool(
+            sort_by=sort_by or "cpu",
+            limit=limit or 5,
+        )
+
+    if action == "inspect_disk":
+        return tool(path or ".")
 
     return {
         "success": False,

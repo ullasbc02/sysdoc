@@ -30,11 +30,11 @@ Good command examples:
 - ps aux
 - ps aux --sort=-%cpu
 - ps aux --sort=-%mem
-- grep -i ERROR sample_logs/app.log
-- tail -n 50 sample_logs/app.log
+- grep -i ERROR data/sample_logs/app.log
+- tail -n 50 data/sample_logs/app.log
 - find . -type f -size +100M
 - ls -lah
-- wc -l sample_logs/app.log
+- wc -l data/sample_logs/app.log
 
 Category meanings:
 - disk: filesystem space and directory size investigation
@@ -66,18 +66,16 @@ def extract_json(text: str) -> dict:
     text = re.sub(r"^```\s*", "", text)
     text = re.sub(r"\s*```$", "", text)
 
-    try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        pass
+    decoder = json.JSONDecoder()
 
-    # Fallback: extract first JSON object from response
-    match = re.search(r"\{.*\}", text, re.DOTALL)
+    for match in re.finditer(r"\{", text):
+        try:
+            parsed, _ = decoder.raw_decode(text[match.start():])
+            return parsed
+        except json.JSONDecodeError:
+            continue
 
-    if not match:
-        raise ValueError("No JSON object found in LLM response.")
-
-    return json.loads(match.group(0))
+    raise ValueError("No JSON object found in LLM response.")
 
 
 def fallback_plan(reason: str) -> list[dict]:
