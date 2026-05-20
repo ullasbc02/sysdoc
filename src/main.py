@@ -17,7 +17,13 @@ from utils.plan_validator import validate_plan_schema
 from src.react_agent import run_react_agent
 from src.react_reporter import build_react_report, save_react_report
 from src.audit import save_agent_audit
-from memory import save_investigation, list_recent_investigations
+from memory import save_investigation, list_recent_investigations, search_similar_investigations
+from config import load_config
+from script_generator import explain_bash_script, generate_bash_script, save_script
+from script_safety import validate_script
+from script_audit import save_script_audit
+from approval import request_approval
+from script_executor import execute_script
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -48,6 +54,37 @@ def handle_react_request(user_input: str) -> None:
     print_header("REACT AGENT MODE")
     approval_required = "--approval" in sys.argv
 
+    from vector_memory import save_investigation_vector, search_similar_vectors
+
+    similar = search_similar_investigations(user_input)
+
+    if similar:
+        print_header("SIMILAR PAST INVESTIGATIONS")
+
+        for item in similar:
+            print(f"ID: {item['id']}")
+            print(f"Time: {item['timestamp']}")
+            print(f"Query: {item['user_query']}")
+            print(f"Score: {item['score']}")
+            print(f"Final: {item['final_answer']}")
+            print("-" * 80)
+
+    config = load_config()
+    semantic_matches = search_similar_vectors(
+        user_input,
+        limit=config["memory"]["semantic_search_limit"],
+    )
+
+    if semantic_matches:
+        print_header("SEMANTICALLY SIMILAR PAST INVESTIGATIONS")
+
+        for item in semantic_matches:
+            print(f"Investigation ID: {item['investigation_id']}")
+            print(f"Score: {item['score']:.4f}")
+            print(f"Query: {item['user_query']}")
+            print(f"Final: {item['final_answer']}")
+            print("-" * 80)
+
     state = run_react_agent(user_input, approval_required=approval_required)
 
     print_header("AGENT TRACE")
@@ -73,10 +110,82 @@ def handle_react_request(user_input: str) -> None:
     report_path = save_react_report(report)
     audit_path = save_agent_audit(state)
     memory_id = save_investigation(state)
+    save_investigation_vector(state, memory_id)
     print()
     print(f"ReAct report saved to: {report_path}")
     print(f"Audit log saved to: {audit_path}")
     print(f"Investigation saved to memory with id: {memory_id}")
+
+
+def handle_script_request(user_input: str) -> None:
+    print_header("SCRIPT GENERATION MODE")
+
+    script = generate_bash_script(user_input)
+    safe, warnings = validate_script(script)
+
+    print_header("GENERATED SCRIPT")
+    print(script)
+
+    print_header("SCRIPT SAFETY REVIEW")
+
+    if safe:
+        print("Script passed safety review.")
+    else:
+        print("Script has safety warnings:")
+
+        for warning in warnings:
+            print(f"- {warning}")
+
+    print_header("SCRIPT EXPLANATION")
+
+    try:
+        explanation = explain_bash_script(script)
+        print(explanation)
+    except Exception as e:
+        explanation = f"Could not generate script explanation: {e}"
+        print(explanation)
+
+    path = save_script(script)
+    audit_path = save_script_audit(
+        user_request=user_input,
+        script_path=path,
+        script=script,
+        safe=safe,
+        warnings=warnings,
+        explanation=explanation,
+    )
+
+    print()
+    print(f"Script saved to: {path}")
+    print(f"Script audit saved to: {audit_path}")
+    print()
+    # print("Note: Script was generated and saved, but not executed.")
+    if "--script-approve" in sys.argv:
+        if not safe:
+            print()
+            print("Script was not executed because it failed safety review.")
+            return
+
+        approved = request_approval("execute_generated_script", path)
+
+        if not approved:
+            print()
+            print("Script execution skipped because approval was denied.")
+            return
+
+        print_header("SCRIPT EXECUTION")
+        execution_result = execute_script(path)
+
+        if execution_result["success"]:
+            print("Script executed successfully.")
+            print(execution_result["stdout"] or "(no output)")
+        else:
+            print("Script execution failed.")
+            print(execution_result["stderr"] or "(no stderr)")
+    else:
+        print()
+        print("Note: Script was generated and saved, but not executed.")
+
 
 def get_plans(user_input: str, llm_enabled: bool) -> tuple[list[dict], str, list[str]]:
     if llm_enabled:
@@ -198,6 +307,10 @@ def main():
             break
 
         if not user_input:
+            continue
+
+        if "--script" in sys.argv:
+            handle_script_request(user_input)
             continue
 
         if user_input.lower() in ["history", "recent"]:

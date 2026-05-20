@@ -18,13 +18,20 @@ DEFAULT_CONFIG = {
     },
     "paths": {
         "default_log_file": "data/sample_logs/app.log",
-        "reports_dir": "data/reports",
-        "audit_dir": "audit_logs",
+        "reports_dir": "ops_reports",
+        "audit_dir": "ops_audit_logs",
+        "scripts_dir": "generated_scripts",
     },
     "tools": {
         "default_process_limit": 5,
         "default_process_sort": "cpu",
         "default_disk_path": ".",
+    },
+    "memory": {
+        "sqlite_db": "opspilot_memory.db",
+        "vector_dir": "vector_store",
+        "embedding_model": "sentence-transformers/all-MiniLM-L6-v2",
+        "semantic_search_limit": 3,
     },
 }
 

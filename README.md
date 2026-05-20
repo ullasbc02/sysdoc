@@ -43,8 +43,15 @@ Docker:
 ```bash
 make docker-build
 make docker-run
-# inside container: python3 -m src.main
 ```
+
+Docker workflow notes:
+
+- If you run `python3 -m pip install ...` inside a live container, the install only lasts for that container instance.
+- To make packages stay installed for future containers, add them to `requirements.txt` and rebuild the image with `make docker-build`.
+- The Dockerfile installs dependencies from `requirements.txt` during image build, so that layer is what should hold `faiss-cpu`, `numpy`, and `sentence-transformers`.
+- The usual flow is: build once, then start as many containers as you want from that image.
+- If you are already inside a running container and want a quick temporary fix, you can still run `python3 -m pip install ...` there, but you will need a rebuild to persist it.
 
 Project layout (important files only):
 
@@ -71,7 +78,9 @@ sysdoc/
 
 Data and outputs:
 
-- `data/reports/` — generated investigation reports
+- `ops_reports/` — generated investigation reports
+- `ops_audit_logs/` — ReAct audit logs
+- `generated_scripts/` — saved Bash scripts from script mode
 - `data/opspilot_history.log` — execution history log
 - `data/sample_logs/` — sample application logs used by the `search_logs` tool
 
@@ -93,8 +102,10 @@ python3 -m tests.test_llm
 Notes and recommendations
 
 - Prefer `python3 -m src.main` so module imports resolve reliably.
-- The Makefile targets call `python3 -m src.main` and `docker` for convenience.
-- Reports and history now live under the `data/` directory.
+- The Makefile targets call `python3 -m src.main` and Docker for convenience.
+- Reports now live in `ops_reports/`, audit logs in `ops_audit_logs/`, and script output in `generated_scripts/`.
+- `data/` is kept for sample logs and the history log file.
+- ReAct and semantic memory depend on `faiss-cpu`, `numpy`, and `sentence-transformers` being installed in the container image.
 
 LLM provider switching
 
@@ -210,10 +221,6 @@ Not yet included:
 
 # Roadmap
 
-## V2 - LLM Planner
-
-Replace static planner with OpenAI / Claude.
-
 Flow:
 
 ```text
@@ -300,12 +307,6 @@ Agents:
 
 # Interview Talking Points
 
-This project demonstrates:
-
-✅ Linux troubleshooting
-✅ Bash automation
-✅ Python systems programming
-✅ safe command execution
 ✅ operational diagnostics
 ✅ AI agent architecture fundamentals
 ✅ production architecture thinking
@@ -326,9 +327,6 @@ Potential upgrades:
 * CI/CD failure investigation
 * Claude Code integration
 * shellcheck validation
-* policy engine
-* audit logging
-* RBAC
 * remote host diagnostics
 
 ---

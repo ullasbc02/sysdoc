@@ -2,6 +2,11 @@
 __pycache__/
 *.py[cod]
 *.log
+ops_reports/
+ops_audit_logs/
+generated_scripts/
+vector_store/
+opspilot_memory.db
 .venv/
 venv/
 env/

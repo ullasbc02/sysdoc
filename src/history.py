@@ -6,6 +6,8 @@ HISTORY_FILE = Path(__file__).parent.parent / "data" / "opspilot_history.log"
 
 
 def save_history(user_input: str, results: list[dict]) -> None:
+    HISTORY_FILE.parent.mkdir(parents=True, exist_ok=True)
+
     with open(HISTORY_FILE, "a", encoding="utf-8") as file:
         file.write("=" * 80 + "\n")
         file.write(f"Timestamp: {datetime.now().isoformat()}\n")

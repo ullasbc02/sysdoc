@@ -1,3 +1,6 @@
 # Runtime dependencies for future LLM-enabled versions of OpsPilot
 openai>=1.0.0
 python-dotenv>=1.0.0
+sentence-transformers
+faiss-cpu
+numpy

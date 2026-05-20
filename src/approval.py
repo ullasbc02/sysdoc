@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+
 def request_approval(action: str, command: str | None = None) -> bool:
     print()
     print("Human approval required")

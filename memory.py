@@ -1,14 +1,21 @@
 import sqlite3
 from datetime import datetime
 from pathlib import Path
+
+from config import load_config
 from src.agent_state import AgentState
 
 
-DB_PATH = Path("opspilot_memory.db")
+def get_db_path() -> Path:
+    config = load_config()
+    return Path(config["memory"]["sqlite_db"])
 
 
 def init_memory_db() -> None:
-    with sqlite3.connect(DB_PATH) as conn:
+    db_path = get_db_path()
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+
+    with sqlite3.connect(db_path) as conn:
         conn.execute(
             """
             CREATE TABLE IF NOT EXISTS investigations (
@@ -41,7 +48,7 @@ def init_memory_db() -> None:
 def save_investigation(state: AgentState) -> int:
     init_memory_db()
 
-    with sqlite3.connect(DB_PATH) as conn:
+    with sqlite3.connect(get_db_path()) as conn:
         cursor = conn.execute(
             """
             INSERT INTO investigations (
@@ -91,7 +98,7 @@ def save_investigation(state: AgentState) -> int:
 def list_recent_investigations(limit: int = 5) -> list[dict]:
     init_memory_db()
 
-    with sqlite3.connect(DB_PATH) as conn:
+    with sqlite3.connect(get_db_path()) as conn:
         conn.row_factory = sqlite3.Row
 
         rows = conn.execute(
@@ -105,3 +112,44 @@ def list_recent_investigations(limit: int = 5) -> list[dict]:
         ).fetchall()
 
         return [dict(row) for row in rows]
+
+
+def search_similar_investigations(query: str, limit: int = 3) -> list[dict]:
+    init_memory_db()
+
+    keywords = [
+        word.lower()
+        for word in query.split()
+        if len(word) > 3
+    ]
+
+    if not keywords:
+        return []
+
+    with sqlite3.connect(get_db_path()) as conn:
+        conn.row_factory = sqlite3.Row
+
+        rows = conn.execute(
+            """
+            SELECT id, timestamp, user_query, final_answer, steps_count
+            FROM investigations
+            ORDER BY id DESC
+            LIMIT 25
+            """
+        ).fetchall()
+
+        scored = []
+
+        for row in rows:
+            text = f"{row['user_query']} {row['final_answer']}".lower()
+
+            score = sum(1 for keyword in keywords if keyword in text)
+
+            if score > 0:
+                item = dict(row)
+                item["score"] = score
+                scored.append(item)
+
+        scored.sort(key=lambda x: x["score"], reverse=True)
+
+        return scored[:limit]
