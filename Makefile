@@ -1,4 +1,4 @@
-.PHONY: run run-rule run-llm run-react run-script run-script-approve demo demo-rule demo-llm docker-build docker-run clean
+.PHONY: run run-rule run-llm run-lc run-react run-script run-script-approve demo demo-rule demo-llm docker-build docker-run clean
 
 run:
 	python3 -m src.main
@@ -8,6 +8,9 @@ run-rule:
 
 run-llm:
 	python3 -m src.main --llm
+
+run-lc:
+	python3 -m src.main --lc
 
 run-react:
 	python3 -m src.main --react

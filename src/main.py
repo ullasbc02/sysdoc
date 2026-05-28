@@ -51,6 +51,10 @@ def use_llm_mode() -> bool:
     return True
 
 
+def use_langchain_mode() -> bool:
+    return "--lc" in sys.argv
+
+
 def handle_react_request(user_input: str) -> None:
     print_header("REACT AGENT MODE")
     approval_required = "--approval" in sys.argv
@@ -189,7 +193,16 @@ def handle_script_request(user_input: str) -> None:
 
 
 def get_plans(user_input: str, llm_enabled: bool) -> tuple[list[dict], str, list[str]]:
-    if llm_enabled:
+    if use_langchain_mode():
+        try:
+            plans = plan_with_langchain(user_input)
+            planner_mode = "LANGCHAIN_STRUCTURED"
+        except Exception as e:
+            print(f"LangChain planner failed. Falling back to rule-based planner. Error: {e}")
+            plans = rule_based_plan_commands(user_input)
+            planner_mode = "RULE_BASED_FALLBACK"
+
+    elif llm_enabled:
         try:
             plans = plan_commands_with_llm(user_input)
             planner_mode = "LLM"
@@ -296,7 +309,10 @@ def main():
 
     print_header("OpsPilot AI - Safe Linux Troubleshooting Agent")
 
-    mode = "LLM" if llm_enabled else "RULE_BASED"
+    if use_langchain_mode():
+        mode = "LANGCHAIN"
+    else:
+        mode = "LLM" if llm_enabled else "RULE_BASED"
     print(f"Mode: {mode}")
     print("Type 'exit' to quit")
 
