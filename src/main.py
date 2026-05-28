@@ -24,6 +24,7 @@ from src.script_safety import validate_script
 from src.script_audit import save_script_audit
 from src.approval import request_approval
 from src.script_executor import execute_script
+from langchain_planner import plan_with_langchain
 
 DEMO_REQUESTS = [
     "check disk usage",
