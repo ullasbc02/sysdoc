@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 from src.executor import execute_command
-from utils.safety import is_safe_command
 from src.config import load_config
+from utils.safety import is_safe_command
 
 def get_default_log_file() -> str:
     config = load_config()
@@ -59,10 +65,36 @@ def search_logs_tool(pattern: str, path: str | None = None) -> dict:
 
     matches = []
 
-    with log_path.open("r", encoding="utf-8") as file:
-        for line in file:
-            if pattern.lower() in line.lower():
-                matches.append(line.strip())
+    if log_path.is_dir():
+        candidate_files = []
+
+        for candidate in sorted(log_path.rglob("*")):
+            if not candidate.is_file():
+                continue
+
+            if candidate.suffix.lower() in {".log", ".txt", ".out", ".err"}:
+                candidate_files.append(candidate)
+
+        if not candidate_files:
+            return {
+                "success": False,
+                "observation": f"No readable log files found under directory: {path}",
+                "command": None,
+            }
+
+        for candidate in candidate_files[:25]:
+            try:
+                with candidate.open("r", encoding="utf-8", errors="ignore") as file:
+                    for line in file:
+                        if pattern.lower() in line.lower():
+                            matches.append(f"{candidate}: {line.strip()}")
+            except OSError:
+                continue
+    else:
+        with log_path.open("r", encoding="utf-8", errors="ignore") as file:
+            for line in file:
+                if pattern.lower() in line.lower():
+                    matches.append(line.strip())
 
     if not matches:
         observation = f"No log lines matched pattern: {pattern}"

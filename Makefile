@@ -44,3 +44,6 @@ clean:
 	rm -rf generated_scripts/*.sh
 	rm -f data/opspilot_history.log
 	rm -f opspilot_memory.db
+
+run-lc-agent:
+	python3 main.py --lc-agent

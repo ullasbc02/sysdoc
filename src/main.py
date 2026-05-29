@@ -25,6 +25,11 @@ from src.script_audit import save_script_audit
 from src.approval import request_approval
 from src.script_executor import execute_script
 from langchain_planner import plan_with_langchain
+from langchain_agent import LangChainAgentSession
+from langchain_agent_reporter import (
+    build_langchain_agent_report,
+    save_langchain_agent_report,
+)
 
 DEMO_REQUESTS = [
     "check disk usage",
@@ -299,9 +304,26 @@ def run_demo(llm_enabled: bool) -> None:
         print_header(f"DEMO REQUEST: {request}")
         handle_request(request, llm_enabled)
 
+def handle_langchain_agent_request(
+    user_input: str,
+    lc_session: LangChainAgentSession,
+) -> None:
+    print_header("LANGCHAIN TOOL-CALLING AGENT")
+
+    result = lc_session.run(user_input)
+
+    print_header("FINAL ANSWER")
+    print(result)
+    report = build_langchain_agent_report(user_input, result)
+    report_path = save_langchain_agent_report(report)
+
+    print()
+    print(f"LangChain agent report saved to: {report_path}")
+
 
 def main():
     llm_enabled = use_llm_mode()
+    lc_session = LangChainAgentSession() if "--lc-agent" in sys.argv else None
 
     if "--demo" in sys.argv:
         run_demo(llm_enabled)
@@ -347,7 +369,9 @@ def main():
                     print("-" * 80)
 
             continue
-
+        if "--lc-agent" in sys.argv:
+            handle_langchain_agent_request(user_input, lc_session)
+            continue
         if "--react" in sys.argv:
             handle_react_request(user_input)
         else:
